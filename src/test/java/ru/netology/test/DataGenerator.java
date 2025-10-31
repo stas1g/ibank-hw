@@ -1,68 +1,47 @@
 package ru.netology.test;
 
-
-import com.github.javafaker.Faker;
+import com.google.gson.Gson;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import lombok.Value;
 
-
-import java.util.Locale;
+import java.util.Random;
 
 import static io.restassured.RestAssured.given;
 
 public class DataGenerator {
-
     private static final RequestSpecification requestSpec = new RequestSpecBuilder()
             .setBaseUri("http://localhost")
             .setPort(9999)
             .setAccept(ContentType.JSON)
             .setContentType(ContentType.JSON)
-            .log(LogDetail.ALL).build();
+            .log(LogDetail.ALL)
+            .build();
 
-    private static final Faker faker = new Faker(new Locale("en"));
+    private static final Gson gson = new Gson();
+    private static final Random random = new Random();
 
     private DataGenerator() {
     }
 
-    private static void sendRequest(RegistrationDto user) {
-        given() // "дано"
-                .spec(requestSpec) // указываем, какую спецификацию используем
-                .body(user) // передаём в теле объект, который будет преобразован в JSON
-                .when() // "когда"
+    public static void sendRequest(RegistrationDto user) {
+        given()
+                .spec(requestSpec)
+                .body(gson.toJson(user))
+                .when()
                 .post("/api/system/users")
                 .then()
-                .statusCode(200)
-                .log().all();
+                .statusCode(200);
     }
 
     public static String getRandomLogin() {
-        String login = faker.name().firstName().toLowerCase();
-        return login;
+        return "user" + System.currentTimeMillis() + random.nextInt(1000);
     }
 
     public static String getRandomPassword() {
-        String password = faker.internet().password(8, 12, true, true, true);
-        return password;
-    }
-
-    public static class Registration {
-        private Registration() {
-        }
-
-        public static RegistrationDto getUser(String status) {
-            RegistrationDto user = new RegistrationDto(getRandomLogin(), getRandomPassword(), status);
-
-            return user;
-        }
-
-        public static RegistrationDto getRegisteredUser(String status) {
-            RegistrationDto registeredUser = getUser(status);
-            sendRequest(registeredUser);
-            return registeredUser;
-        }
+        return "pass" + System.currentTimeMillis() + random.nextInt(1000);
     }
 
     @Value
@@ -70,5 +49,24 @@ public class DataGenerator {
         String login;
         String password;
         String status;
+    }
+
+    public static class Registration {
+        private Registration() {
+        }
+
+        public static RegistrationDto getUser(String status) {
+            return new RegistrationDto(
+                    getRandomLogin(),
+                    getRandomPassword(),
+                    status
+            );
+        }
+
+        public static RegistrationDto getRegisteredUser(String status) {
+            var registeredUser = getUser(status);
+            sendRequest(registeredUser);
+            return registeredUser;
+        }
     }
 }
