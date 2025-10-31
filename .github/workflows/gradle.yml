@@ -16,6 +16,9 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Fix gradlew permissions
+        run: chmod +x ./gradlew
+
       - name: Start SUT in test mode
         run: java -jar ./artifacts/app-ibank.jar -P:profile=test &
         shell: bash
